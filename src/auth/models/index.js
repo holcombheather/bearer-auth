@@ -10,14 +10,14 @@ const DATABASE_CONFIG = process.env.NODE_ENV === 'production' ? {
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false,
-    }
-  }
+      rejectUnauthorized: true,
+    },
+  },
 } : {};
 
 const sequelize = new Sequelize(DATABASE_URL, DATABASE_CONFIG);
 
-module.exports = {
-  db: sequelize,
-  users: userSchema(sequelize, DataTypes),
-};
+const Users = userSchema(sequelize, DataTypes);
+
+module.exports = { sequelize, Users };
+

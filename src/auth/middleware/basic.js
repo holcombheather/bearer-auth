@@ -1,22 +1,26 @@
 'use strict';
 
+const bcrypt = require('bcrypt');
 const base64 = require('base-64');
-const { user } = require('../models/index.js');
+const { Users } = require('../models/index');
 
 module.exports = async (req, res, next) => {
-
-  if (!req.headers.authorization) { return _authError(); }
-
-  let basic = req.headers.authorization;
-  let [username, pass] = base64.decode(basic).split(':');
+  let basicHeaderParts = req.headers.authorization.split(' ');
+  let encodedString = basicHeaderParts.pop();
+  let decodedString = base64.decode(encodedString);
+  let [username, password] = decodedString.split(':');
 
   try {
-    req.user = await user.authenticateBasic(username, pass)
-    next();
-  } catch (e) {
-    console.error(e);
-    res.status(403).send('Invalid Login');
-  }
+    const user = await Users.findOne({ where: { username: username } });
+    const valid = await bcrypt.compare(password, user.password);
+    if (valid) {
+      res.status(200).json(user);
+      req.user = user;
+    }
+    else {
+      throw new Error('Invalid User');
+    }
+  } catch (error) { res.status(403).send('Invalid Login'); }
 
-}
+};
 
